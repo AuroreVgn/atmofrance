@@ -116,3 +116,14 @@ async def test_l_appareil_est_un_service_attribue_a_atmo(hass):
 
     assert entity._attr_device_info["model"] == "Atmo France API"
     assert "Atmo France" in entity._attr_attribution
+
+
+@pytest.mark.parametrize("entity_class,description", [
+    (AtmoFrancePollutionEntity, PM10),
+    (AtmoFrancePollenLevelEntity, AMBROISIE),
+    (AtmoFrancePollenConcentrationEntity, CONC_GRAM),
+])
+async def test_missing_values_are_unknown_not_zero(hass, entity_class, description):
+    entity = make_entity(hass, entity_class, description, {})
+    assert entity.native_value is None
+    assert entity.extra_state_attributes is not None
