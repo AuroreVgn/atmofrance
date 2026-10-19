@@ -178,8 +178,9 @@ async def test_le_pollen_n_herite_jamais_de_la_zone_pollution(hass):
         hass, {(EPCI_CODE, URL_CODE.POLLUTION): FEATURES},
         POLLUTION_AND_POLLEN)
 
-    assert entry.state is ConfigEntryState.SETUP_RETRY
-    assert CONF_POLLEN_COORDINATOR not in coordinators(hass, entry)
+    assert entry.state is ConfigEntryState.LOADED
+    assert CONF_POLLEN_COORDINATOR in coordinators(hass, entry)
+    assert CONF_POLLUTION_COORDINATOR in coordinators(hass, entry)
 
 
 async def test_chaque_indicateur_resout_sa_propre_zone(hass):
@@ -194,3 +195,24 @@ async def test_chaque_indicateur_resout_sa_propre_zone(hass):
     assert entry.state is ConfigEntryState.LOADED
     assert construits[CONF_POLLUTION_COORDINATOR]._source == CONF_INSEE_EPCI
     assert construits[CONF_POLLEN_COORDINATOR]._source == CONF_INSEE_CODE
+
+
+async def test_pollution_loads_during_pollen_off_season(hass):
+    entry = await setup_entry(
+        hass, {(CITY_CODE, URL_CODE.POLLUTION): FEATURES},
+        POLLUTION_AND_POLLEN,
+    )
+    assert entry.state is ConfigEntryState.LOADED
+    assert CONF_POLLUTION_COORDINATOR in coordinators(hass, entry)
+    assert CONF_POLLEN_COORDINATOR in coordinators(hass, entry)
+
+
+async def test_pollen_returns_when_data_is_published(hass):
+    entry = await setup_entry(
+        hass, {(CITY_CODE, URL_CODE.POLLUTION): FEATURES},
+        POLLUTION_AND_POLLEN,
+    )
+    pollen = coordinators(hass, entry)[CONF_POLLEN_COORDINATOR]
+    pollen.api._coverage[(EPCI_CODE, URL_CODE.POLLEN)] = FEATURES
+    assert await pollen._update_method() is True
+    assert pollen._source == CONF_INSEE_EPCI
