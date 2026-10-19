@@ -121,7 +121,7 @@ class AtmoFranceEntity(CoordinatorEntity, SensorEntity):
                       self._attr_name)
 
     def _level2color(self, value):
-        return LEVEL_COLOR[value]
+        return LEVEL_COLOR.get(value)
 
 
 class AtmoFrancePollutionEntity(AtmoFranceEntity):
@@ -139,13 +139,13 @@ class AtmoFrancePollutionEntity(AtmoFranceEntity):
 
     @property
     def native_value(self):
-        if self._coordinator.api.get_key_value(self.entity_description.json_key, self._shift) != '':
+        if self._coordinator.api.get_key_value(self.entity_description.json_key, self._shift) not in ('', None):
             value = int(self._coordinator.api.get_key_value(
                 self.entity_description.json_key, self._shift))
         else:
-            value = 0
+            value = None
             _LOGGER.warning(
-                "Unable to get value for %s. Force value to 0", self._attr_name
+                "Unable to get value for %s. Value unavailable", self._attr_name
             )
         _LOGGER.debug("Value for pollution sensor %s is now %s",
                       self._attr_name, value)
@@ -162,7 +162,7 @@ class AtmoFrancePollutionEntity(AtmoFranceEntity):
         }
 
     def _level2string(self, value):
-        return POLLUTION_LEVEL[value]
+        return POLLUTION_LEVEL.get(value, 'Indisponible')
 
 
 class AtmoFrancePollenLevelEntity(AtmoFranceEntity):
@@ -180,14 +180,14 @@ class AtmoFrancePollenLevelEntity(AtmoFranceEntity):
 
     @property
     def native_value(self):
-        if self._coordinator.api.get_key_value(self.entity_description.json_key, self._shift) != '':
+        if self._coordinator.api.get_key_value(self.entity_description.json_key, self._shift) not in ('', None):
             # Pollen alert levels are expressed as float cast them to int.
             value = int(self._coordinator.api.get_key_value(
                 self.entity_description.json_key, self._shift))
         else:
-            value = 0
+            value = None
             _LOGGER.warning(
-                "Unable to get value for %s. Force value to 0", self._attr_name
+                "Unable to get value for %s. Value unavailable", self._attr_name
             )
         _LOGGER.debug("Value for pollen level sensor %s is now %s",
                       self._attr_name, value)
@@ -204,7 +204,7 @@ class AtmoFrancePollenLevelEntity(AtmoFranceEntity):
         }
 
     def _level2string(self, value):
-        return POLLEN_LEVEL[value]
+        return POLLEN_LEVEL.get(value, 'Indisponible')
 
 
 class AtmoFrancePollenConcentrationEntity(AtmoFranceEntity):
@@ -222,13 +222,13 @@ class AtmoFrancePollenConcentrationEntity(AtmoFranceEntity):
     @property
     def native_value(self):
         # FIXME real 0 should not fall into else...
-        if self._coordinator.api.get_key_value(self.entity_description.json_key, self._shift) != '':
+        if self._coordinator.api.get_key_value(self.entity_description.json_key, self._shift) not in ('', None):
             value = self._coordinator.api.get_key_value(
                 self.entity_description.json_key, self._shift)
         else:
-            value = 0
+            value = None
             _LOGGER.warning(
-                "Unable to get value for %s. Force value to 0", self._attr_name
+                "Unable to get value for %s. Value unavailable", self._attr_name
             )
         _LOGGER.debug("Value for sensor %s is now %s",
                       self._attr_name, value)
