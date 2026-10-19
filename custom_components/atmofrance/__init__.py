@@ -117,10 +117,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 # zones are independent and must never be inherited.
                 source = await _async_resolve_source(entry, pollenapi, URL_CODE.POLLEN)
                 if source is None:
-                    raise ConfigEntryNotReady(
-                        f"No pollen data available for city {entry.data[CONF_INSEE_CODE]} "
-                        f"nor EPCI {entry.data[CONF_INSEE_EPCI]}"
-                    )
+                    # Pollen may be absent outside the pollen season.
+                    # Keep the coordinator so it can discover returning data.
+                    _LOGGER.info("No pollen data currently available; keeping pollen sensors")
+                    source = CONF_INSEE_CODE
                 hass.data[DOMAIN][entry.entry_id][
                     CONF_POLLEN_COORDINATOR
                 ] = AtmoFrancePollenApiCoordinator(hass=hass, config=entry, api=pollenapi, source=source)
@@ -204,11 +204,16 @@ class AtmoFrancePollenApiCoordinator (AtmoFranceApiCoordinator):
 
     async def _update_method(self):
         data = await self.api.get_data(self.config.data[self._source], URL_CODE.POLLEN)
-        if data is not None and len(data) > 0:
+        if data:
             return True
-        else:
-            self.async_set_update_error(
-                f'No Data from Atmo France for INSEE code {
-                    self.config.data[self._source]} and date {date.today().strftime("%Y-%m-%d")}'
-            )
-        return False
+        # Retry the alternate zone: coverage can change during the season.
+        other_source = (CONF_INSEE_EPCI if self._source == CONF_INSEE_CODE
+                        else CONF_INSEE_CODE)
+        other_data = await self.api.get_data(self.config.data[other_source], URL_CODE.POLLEN)
+        if other_data:
+            self._source = other_source
+            return True
+        # Empty data is expected outside pollen season, not a setup failure.
+        if data is None and other_data is None:
+            raise UpdateFailed("Unable to fetch pollen data from Atmo France")
+        return True
