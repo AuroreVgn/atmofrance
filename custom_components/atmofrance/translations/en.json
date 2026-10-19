@@ -31,7 +31,7 @@
             "sensors_type": {
                 "data": {
                     "include_pollution": "Pollution indicators",
-                    "include_pollen": "pollen indicators"
+                    "include_pollen": "Pollen indicators"
                 },
                 "title": "Indicator type selection",
                 "description": "Select sensor type"
@@ -54,7 +54,7 @@
             "init": {
                 "data": {
                     "include_pollution": "Pollution indicators",
-                    "include_pollen": "pollen indicators"
+                    "include_pollen": "Pollen indicators"
                 },
                 "description": "Select sensor type"
             },
